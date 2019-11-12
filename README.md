@@ -1,24 +1,32 @@
 KAYNAK: https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST38jboldiQdds&index=7
 
 
-# LARAVEL
+# LARAVEL NOTLARI
 
-## LAMP kurulacak
+## KURULUMLAR
 
-## NodeJS Kurulacak
-- curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-- sudo apt-get install -y nodejs
-- nodejs -v
-- npm -v
+### LAMP kurulur
+```BASH
+sudo apt install curl vim git php apache2 mysql-server mysql-client
+sudo apt install php-pear php-fpm php-dev php-zip php-curl php-xmlrpc php-gd php-mysql php-mbstring php-xml libapache2-mod-php -y
+```
 
-## Composer Kurulumu
-- sudo apt install curl vim
-- sudo apt install php php-pear php-fpm php-dev php-zip php-curl php-xmlrpc php-gd php-mysql php-mbstring php-xml libapache2-mod-php -y
-- curl -sS https://getcomposer.org/installer | php
-- sudo mv composer.phar /usr/local/bin/composer
-- composer global require laravel/installer
+### NodeJS Kurulur
+```BASH
+curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+sudo apt-get install -y nodejs
+nodejs -v
+npm -v
+```
 
-## PATH Tanımı gerekiyor:
+### Composer Kurulumu
+```BASH
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+composer global require laravel/installer
+```
+
+### PATH Tanımı gerekiyor:
 - `sudo vi /etc/environment`
 - Şöyle görünebilir:  **PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"**
 - Bu PATH değişkeninin başına şu kod eklenir: `$HOME/.config/composer/vendor/bin:`
@@ -27,15 +35,33 @@ KAYNAK: https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST3
 
 # LARAVEL
 
-## Yeni bir Laravel Projesine Başlama
+### Yeni bir Laravel Projesine Başlama
 - `laravel new /var/www/html/blog`
 - veya
 - `composer create-project --prefer-dist laravel/laravel /var/www/html/blog`
 
-## PROJE DİZİNİMİZ:
+### Yeni Laravel Uygulamamızın ayarları
+- **config/app.php** dosyası içinde timezone ve locale için ayarlar vardır.
+- `.env` dosyası içinde şu sahalar doldurulur:
+- `APP_NAME="Laravel Blog Uygulaması"`
+- `APP_URL=http://localhost.development`   DİKKAT: Sonunda '/' karakteri YOK!
+- `APP_DEBUG=true`
+
+### APP KEY değiştirme/oluşturma
+- KEY tanımı, `.env` adlı dosya içinde yer alır.
+- `.env` adlı bir dosya yoksa `.env.example` adlı dosya kopyalanarak oluşturulur
+- KEY oluşturma komutu: `php artisan key:generate`
+- Eğer, key oluşturulmazsa uygulama güvenli olmaz.
+
+### DB için ön hazırlık
+- `vi app/Providers/AppServiceProvider.php`
+- Dosya başına: `use Illuminate\Support\Facades\Scheme;`
+- `boot()` bölümüne: `Schema::defaultStringLength(191);`  Böylece "Specified key was too long" hatası engellenecektir
+
+### PROJE DİZİNİMİZ:
 - `/var/www/html/lara/blog`
 
-## Proje için APACHE ayarı
+### Proje için APACHE ayarı
 - `vi /etc/apache2/sites-enabled/000-default.conf`
 - **Şunu ekle:**
 - <VirtualHost *:80>
@@ -53,7 +79,7 @@ KAYNAK: https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST3
 - Veya Devreye girmesi için ayarları tekrar okut: `sudo service apache2 reload`
 - NOT: Windows'da bunun için **Host File Editor** adlı program kullanılabilir
 
-## Gerekli dizinlere YAZMA yetkisi verilmesi
+### Gerekli dizinlere YAZMA yetkisi verilmesi
 ```BASH
 cd /var/www/html/lara/
 chmod -R g+w storage/
@@ -61,15 +87,15 @@ chmod -R g+w bootstrap/cache/
 chown -R $USER:www-data /var/www/html/lara/
 ```
 
-## Proje için HOSTS ayarı
+### Proje için HOSTS ayarı
 - `vi /etc/hosts`
 - **Şunu ekle:**
 - `127.0.0.1     laravel.development`
 
-## Tarayıcıdan Test Edelim
+### Tarayıcıdan Test Edelim
 - http://laravel.development
 
-## Yerel laravel Sunucusunu Başlatma
+### Yerel laravel Sunucusunu Başlatma
 Proje dizininde olduğunuza emin olun!
 ```BASH
 cd /var/www/html/lara/blog
@@ -77,7 +103,9 @@ php artisan serve
 http://127.0.0.1:8000
 ```
 
-## DB İçin Bağlantı Kurulması
+# VERİTABANI
+
+### DB İçin Bağlantı Kurulması
 - Adminer'e girilir ve `laravel_blog` adında yeni bir DB oluşturulur
 - Proje dizinine geçilir
 - `.env` dosyası içinde şu sahalar doldurulur:
@@ -85,33 +113,13 @@ http://127.0.0.1:8000
 - `DB_USERNAME=root`
 - `DB_PASSWORD=root`
 
-## SQLite kullanmak istenirse DB Ayarı
+### SQLite kullanmak istenirse DB Ayarı
 - BOŞ sqlite oluşturmak için: `touch database/myBlogs.sqlite`
 - **config/database.php** içine şunlar yazılır:
 - DB_CONNECTION=sqlite
 - DB_DATABASE=/absolute/path/to/myBlogs.sqlite
 
-
-## Yeni Laravel Uygulamamızın ayarları
-- **config/app.php** dosyası içinde timezone ve locale için ayarlar vardır.
-- `.env` dosyası içinde şu sahalar doldurulur:
-- `APP_NAME="Laravel Blog Uygulaması"`
-- `APP_URL=http://localhost.development`   DİKKAT: Sonunda '/' karakteri YOK!
-- `APP_DEBUG=true`
-
-## APP KEY değiştirme/oluşturma
-- KEY tanımı, `.env` adlı dosya içinde yer alır.
-- `.env` adlı bir dosya yoksa `.env.example` adlı dosya kopyalanarak oluşturulur
-- KEY oluşturma komutu: `php artisan key:generate`
-- Eğer, key oluşturulmazsa uygulama güvenli olmaz.
-
-## DB için ön hazırlık
-- `vi app/Providers/AppServiceProvider.php`
-- Dosya başına: `use Illuminate\Support\Facades\Scheme;`
-- `boot()` bölümüne: `Schema::defaultStringLength(191);`  Böylece "Specified key was too long" hatası engellenecektir
-
-
-## Migration hazırlama
+### Migration hazırlama
 - Faydalı Kaynak: https://kodumunblogu.net/detail/laravelde-veritabani-iliskileri-eloquent-relationships-islemleri
 - **ORM**: Object Relational Mapper ile DB işlemleri kolayca yapılır
 - **MODEL**: DB içindeki TABLO olarak düşünülmelidir
@@ -144,7 +152,9 @@ Tabloda değişiklik olursa,
 - database/migrations/xxxxxx_xxx_create_users_table.php içinde değişiklikler yapılır.
 - Proje dizinine geçilir ve `php artisan migrate` komutu uygulanır
 
-## Projeye yeni bir Tablo (model) ekleme
+# MODEL
+
+### Projeye yeni bir Tablo (model) ekleme
 - `php artisan make:model Post -m` yapılır. Dikkat!!! Çoğul değil!! (s yok, Posts değil)
 - Böylece hem Model dosyası oluşturulur hem de migration dosyası. Örnek:
   - app/Post.php
@@ -169,7 +179,7 @@ Artık, veritabanında posts (ve users) adlı tabloları görebiliriz
 
 # ROUTE
 
-## Rooting tanımı sonrasında 404 hatası oluşursa:
+### Rooting tanımı sonrasında 404 hatası oluşursa:
 - `sudo a2enmod rewrite` komutu çalıştırılır
 - `vim  /etc/apache2/apache2.conf` komutu ile aşağıdaki bölümün olması sağlanır  **AllowOverride All** olduğuna emin ol!
 ```
@@ -181,7 +191,7 @@ Artık, veritabanında posts (ve users) adlı tabloları görebiliriz
 ```
 - Değişikliklerin devreye girmesi için: `sudo service apache2 restart`
 
-## Rooting normal çalışırsa:
+### Rooting normal çalışırsa:
 - `routes/web.php` içinde çalışılır
 - `dd("mesaj");` Uygulama akışını keser (die komutu) ve mesajı gösterir
 - Route'lar MODEL ve GÖRÜNÜM arasında yer alırlar
@@ -207,7 +217,8 @@ public function showUsers($id) {
 ```
 
 
-# View
+# VIEW
+
 - Route'ın sonucunda bir sayfa gösterilecekse, bu sayfa view ile yapılır
 - **resources/views** dizini altındadırlar
 - **SAYFAADI.blade.php** olarak isimlendirilir
@@ -216,7 +227,9 @@ public function showUsers($id) {
 Merhaba {{ $isim }}
 ```
 
-# Blade
+
+# BLADE
+
 - Master Template
 - Blade içinde değişken saha tanımlama: `@yield('BLOGICERIGI')`
 - KULLANIMI:
@@ -227,7 +240,7 @@ Merhaba {{ $isim }}
 @endsection
 ```
 
-# Controller
+# CONTROLLER
 
 - DB'den veriyi çeker ve View içine yerleştirir
 - `php artisan make:controller UserController`
@@ -257,7 +270,7 @@ Yukarıdaki kod, **resources/views/sayfalar/kullanicilar.blade.php** sayfasını
 ```
 
 
-## Controller içinden tablodan veri çekme
+### Controller içinden tablodan veri çekme
 - Sayfa başına ekle: `use App\User`   (Veri çekeceğimiz tablo için)
 - **UserController.php** örnek içeriği: (class içeriği)
 ```PHP
