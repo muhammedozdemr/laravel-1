@@ -4,6 +4,7 @@
 ## Faydalanılan Kaynaklar
 - [Kısa Kaynak, 20 Video, Laravel for Beginners, By Mr Digital](https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST38jboldiQdds)
 - [Uzun Kaynak, 43 Video, Laravel 6 tutorial, By php step by step](https://www.youtube.com/watch?v=ZE_IG7rF2a8&list=PL8p2I9GklV47fi-yiWkfRpbMV8PPaQDH4)
+- [Laravel Best Practice (Türkçe)](https://github.com/alexeymezenin/laravel-best-practices/blob/master/turkish.md)
 
 
 ### Faydalı Kaynaklar
@@ -140,6 +141,15 @@ public function checkDb() {
 - **config/database.php** içine şunlar yazılır:
 - DB_CONNECTION=sqlite
 - DB_DATABASE=/absolute/path/to/myBlogs.sqlite
+
+# Migration
+- Migration, veri tabanı için **Sürüm Yönetim Sistemi** olarak düşünülebilir
+- Migration yardımı ile **Table** oluşturma: `php artisan make:migration --create=company`
+- Böylece, **app/data/migration** dizini altına yeni bir dosya eklenir
+- Oluşan dosya açılıp tablo sutunları tanımlaıp kaydedilir.
+- `php artisan migrate` komutu çalıştırılarak tablonun oluşturulması sağlanır
+- `php artisan migrate:reset` komutu, DB içindeki tüm table'ları siler!
+- 
 
 ### Migration hazırlama
 - Faydalı Kaynak: https://kodumunblogu.net/detail/laravelde-veritabani-iliskileri-eloquent-relationships-islemleri
@@ -299,6 +309,12 @@ Merhaba {{ $isim }}
 - Kodu compile etmek için: `npm run dev`
 - Kod değiştikçe compile etmek için: `npm run watch`
 - View içinde kullanım örneği: `<link href="{{ asset('css/blog.css') }}" rel="stylesheet">`
+- Blade içindeki JS'de değişkene JSON değer atamak için:
+```PHP
+<script>
+    var DATA = @json($data);
+</script>
+```
 
 
 
@@ -430,7 +446,9 @@ public function ShowUsers() {
 - `php artisan vendor:publish --tag=laravel-pagination`
 
 
-
+# Pagination
+- Verinin ekrana sayfa sayfa listelenmesini sağlar
+- 
 
 
 # FACTORY
