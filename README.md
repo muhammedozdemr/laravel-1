@@ -260,6 +260,10 @@ Merhaba {{ $isim }}
 
 @include("includes.navbar")   // Bağımsız dosyadan NAVBAR çektik
 
+@if(Auth::check())
+	// Kullanıcı LOGİN olmuşsa gösterilecek şeyler burada
+@endif
+
 @section('BLOGICERIGI')
    {{-- Bölüm içinde gösterilecekler buraya yazılır --}} 
 @endsection
@@ -273,15 +277,25 @@ Merhaba {{ $isim }}
 
 
 
-# SCSS ve JS dosyalarının derlenmesi (webpack.mix.js=
+# Projeye özel CSS ve JS dosyaları
 
-- webpack.mix.js dosyası içinde sürüm eklendiğinde:
+- CSS, SCSS ve JS dosyaları **webpack.mix.js** içinde tanımlanır
+- webpack.mix.js dosyası içinde kullanılacak dosyaların tanımlanması:
+- `mix.js('resources/js/app.js', 'public/js')`
+- `.sass('resources/sass/NURI.scss', 'public/css');`
+- `.sass('resources/sass/app.scss', 'public/css');`  Kendi CSS dosyalarımızı böyle ekliyoruz
+- View içinde kullanım örneği 1: `<link href="{{ asset('css/app.css') }}" rel="stylesheet">`   !! versiyonlama yoksa
+- View içinde kullanım örneği 2: `<link href="{{ mix('css/app.css') }}" rel="stylesheet">`   !! versiyonlama varsa
+- `nmp run watch` yapılınca mix.js'de belirtilen dosyalar değişikliğe karşı izlemeye alınır, değişiklik olunca otomatik derlenir.
+- `nmp run dev` yapılınca mix.js'de belirtilen dosyalar development ortamı için derlenir
+- `nmp run prog` yapılınca mix.js'de belirtilen dosyalar production ortamı için minified edilerek derlenir
+- css ve js dosyalar için VERSION eklemek için webpack.mix.js dosyası tanımı:
 - `mix.js('resources/js/app.js', 'public/js').version()`
 - `.sass('resources/sass/NURI.scss', 'public/css').version();`
-- `.sass('resources/sass/app.scss', 'public/css').version();`  Kendi CSS dosyalarımızı böyle ekliyoruz
-- View içinde kullanım örneği: `<link href="{{ mix('css/app.css') }}" rel="stylesheet">` 
-- `nmp run dev` yapılınca mix.js'de belirtilen dosyalar derlenir
-- `nmp run prog` yapılınca mix.js'de belirtilen dosyalar minified edilerek derlenir
+- `.sass('resources/sass/app.scss', 'public/css').version();`
+- Böylece, üretilen dosya çağrılırken xxx.css?123123132123 gibi bir şekilde çağrılır cache'lenmesinin önüne geçilir.
+
+
 
 
 
@@ -342,7 +356,6 @@ Yukarıdaki kod, **resources/views/sayfalar/kullanicilar.blade.php** sayfasını
 
 
 
-
 ### Controller içinden tablodan veri çekme
 - Sayfa başına ekle: `use App\User`   (Veri çekeceğimiz tablo için)
 - **UserController.php** örnek içeriği: (class içeriği)
@@ -366,7 +379,9 @@ public function ShowUsers() {
 	
 	@foreach($arrKullanicilar as $Kullanici)
 
-		{{ $kullanici->adi }}		{{ $kullanici->soyadi }}   <br>
+		{{ $kullanici->adi }}     {{ $kullanici->soyadi }}
+
+		<a href="{{ route('edituser', $kullanici->adi) }}">Edit User</a> <br>
 
 	@endforeach
 
@@ -425,6 +440,8 @@ TODO: EKSİK
 		'fname' >= 'required',
 		'lname' >= 'required',
 		'email' >= 'required|email',
+	// veya:
+	//	'email' >= 'required|email|unique:user,email,' . request()->id ,
 	]);
 
 	$user = new User;
@@ -440,4 +457,117 @@ TODO: EKSİK
 
 - auth()
 - request()
+
+# Password HASH
+
+- passwords Sahaları HASH'lenerek veritabanında saklanmalı. Bunun için:
+- İlgili model'in controller dosyasının başına: `use Illuminate\Support\Facades\Hash;`
+- Kullanımı:
+```PHP
+use Illuminate\Support\Facades\Hash; // Dosyanın başına yaz!
+
+	$user = new User;
+	$user->fname = $request->fname;
+	$user->lname = $request->lname;
+	$user->password = Hash::make($request->password);
+	$user->save();
+
+```
+
+# Authentication, Login, Logout
+
+## AuthController İçin Yapılacaklar
+- `php artisan make:controller AuthController` ile controller dosyası oluşturulur
+- Controller içindeki **login** ve **signin** için tanımlama yapılır:
+```PHP
+use Illuminate\Support\Facades\Auth; // Dosyanın başına yaz!
+
+public function login() 
+{
+	return view('login');  // login formunu gösterelim
+}
+
+public function logout() 
+{
+	Auth::logout()
+	return redirect()->back();  // login formunu gösterelim
+}
+
+public function signin(Request $request) { 
+	$request->validate([
+		'email'    => 'required',
+		'password' => 'required',
+	]);
+
+	if( Auth::attempt([
+		'email'    => $request->email,
+		'password' => $request->password,
+		]) 
+	  ) 
+	{
+		return redirect()->intended( route("userWelcome") ); // intended, Login sayfasına nereden yöneltildiyse o sayfaya gitmesini sağlar!!!
+	}
+	return redirect()->back().with("danger", "Login is incorrect");
+
+}
+```
+
+## Sayfaların korumaya alınması
+- İlgili Controller dosyaları açılır. Örnek: **UserController.php**
+- Class tanımına şu constructor eklenir:
+```PHP
+public function __construct()
+{
+	$this->middleware('auth'); // __construct tanımında bu kod olan sayfalara giriş yapılması şartı aranır
+}
+```
+
+## Hazırlanacak view'ler
+- Login Sayfası: **login** Login için nereye gidileceği **app/Http/Middleware/Authenticate.php** dosyasına belirtilir.
+- Login sonrası karşılama Sayfası: **userWelcome**
+
+## Hazırlanacak route'lar
+```PHP
+	Route::get('/login', 'AuthController@login'})->name('login')->middleware('guest');
+	Route::get('/signin', 'AuthController@signin'})->name('signin');
+	Route::post('/logout', 'AuthController@logout'})->name('logout');
+```
+
+## Login View Dosyası
+- Yetkilendirmesi olmayan (giriş yapmamış) kullanıcıyı "login" sayfasına göndermemiz lazım.
+- Bunu için "/login" için bir **route** tanımı yapılır:
+- `Route::get('/login', 'AuthController@login'})->name('login');` // KORUMA YOK
+- **login.blade.php** dosyası içinde bir login formu hazırlanır
+- Form'un tanımı: `action="{{ route('signin') }}" method="post" `
+- **Ayrıca,**
+- Giriş yapmış bir kişi tekrar login sayfasına girmesin. Bunun yerine kişiyi bir yere gönderelim. 
+- Bunun için **app/Http/Middleware/RedirectIfAuthenticated.php** dosyası açılır:
+- `return redirect('/userWelcome');` Oturum açtıysa ve login sayfasına tekrar gidiyorsa gitmesin! buraya yönlendirelim
+
+
+## Logout için blade
+```
+@if(Auth::check())
+	<form method="post" action="{{ route('logout') }}">
+		@csrf
+		<button type="submit">Logout</button>
+	</form>
+@endif
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
