@@ -221,13 +221,25 @@ Route::get('/home', function () {
     return view('sayfalar.home', compact('isim'));
 });
 
+// Route ile çağrının view ile cavaplanması
+Route::view('users', 'users');
+
 
 // Controller'in parametre ile çağrılması:
 Route::get('/users/user/{id}', 'UserController@showUsers'});
 
+// Controller'in BAZEN parametre ile çağrılması:
+Route::get('/users/user/{id?}', function ($id=0) {
+    return view('sayfalar.home', compact('id'));
+});
+
 // Route için isim verilmesi:
 Route::get('/users/user/{id}', 'UserController@showUsers'})->name("KullaniciGoster");
 // Bunu view içinde kullanmak için: <a href={{ route('KullaniciGoster') }}>GÖSTER</a>
+
+// Bir yere yöneltilen akışın başka yere yönelndirilmesi
+Route::redirect('/urunler', '/coksatanlar'});
+
 
 
 // Controller tanımı:
@@ -242,6 +254,7 @@ public function showUsers($id) {
 # VIEW
 
 - Ekranda görüntülenen çıktı view ile sağlanır
+- View isimlendirmesi KÜÇÜK HARF ile başlamalıdır.
 - Route'ın sonucunda bir sayfa gösterilecekse, bu sayfa view ile yapılır
 - **resources/views** dizini altındadırlar
 - **SAYFAADI.blade.php** olarak isimlendirilir
@@ -302,6 +315,7 @@ Merhaba {{ $isim }}
 # CONTROLLER
 
 - DB'den veriyi çeker ve View içine yerleştirir
+- Controller adı BÜYÜK HARFLER başlar
 - `php artisan make:controller UserController`
 - Yukarıdaki komut **app/http/Controller** dizini altına **UserController.php** dosyasını oluşturur
 - **UserController.php** çağrılırken yazılacak route tanımı:
@@ -328,32 +342,42 @@ Yukarıdaki kod, **resources/views/sayfalar/kullanicilar.blade.php** sayfasını
     return view("sayfalar.kullanicilar", compact('arrSonuc') );
 ```
 
-- Controller'den View'a SONUÇ bildirerek çaşrı yapma: `return redirect()->back()->with('success', 'Kayıt başarılı');`
+- Controller'den View'a SONUÇ bildirerek çağrı yapma: `return redirect()->back()->with('success', 'Kayıt başarılı');`
 - View'den, bu çağrının karşılanması: 
 ```PHP
 	@if(session()->has('success'))
 		{{ session()->get('success') }} // Session değişkeni kontrolü
 	@endif
-
-	@if($errors()->any())
-		// $request->validate() tarafında oluşan hatalar burada yakalanır...
-		<ul>
-		@foreach($errors()->all() as $error)
-			<li>{{ $error }}</li>
-		@endforeach
-		</ul>
-	@endif
-
-
-	<form method="post" action="{{ route('createUser') }}">
-		<input type="text" name="fname" value="{{old('fname')}}" required> // Hata sonrası forma eski değerleri doldurabilmek için
-	</form>
-
 ```
 - Yukarıdaki kod bağımsiz bir view olarak sisteme kaydedilerek BAŞARILI mesajı verilecek her yerde `@include('validation')` edilerek kullanılabilir.
 
 **app/http/request** klasörüne bu request için controller oluşturma: `php artisan make:request CreateUser` Böylece, form gönderme sonrasındaki her kontrol bağımsız olarak bu dosyada yapılabilir. Bu dosyanın **Rules** başlığı kuralları tanımlar, **authorize** bölümü ise kurallar sağlandığında nasıl bir cevap döneceğini tanımlar
 
+## API Yazma
+- Controller, cevabını API için kullanmak istersek jSON formatında dönebiliriz:
+```PHP
+public function getUserInfo($id) {
+	
+    return ["id"=>$id, "fname"=>"Nuri", "lname"=>"Akman"]; // Sonuç jSON formatındadır.
+}
+```
+
+
+## REQUEST
+- Controller içinden REQUEST detaylarına şu şekilde erişiriz:
+```PHP
+public function test(Request $request) 
+{
+	dd($request->input());      // Tüm GET veya POST??? parametrelerini listeler
+	print_r($request->input());      // Tüm GET veya POST??? parametrelerini listeler
+	dd($request->input('id'));  // URL'deki id adlı sahanın değerini alır
+	dd($request->path());  // URL'deki yol değerini gösterir
+	dd($request->url());  // URL'in tam değerini gösterir
+	dd($request->method());  // Yönetimi gösteri: POST, GET; vb.vb.
+	if( $request->isMethod('GET') ) echo "GET ile çağrıldı";
+	dd($request->query());  // URL'deki parametreleri gösterir
+}
+```
 
 
 ### Controller içinden tablodan veri çekme
@@ -437,7 +461,7 @@ TODO: EKSİK
 # FORM Validation
 ```PHP
 	$request()->validate([
-		'fname' >= 'required',
+		'fname' >= 'required|min:3|max:50',
 		'lname' >= 'required',
 		'email' >= 'required|email',
 	// veya:
@@ -451,6 +475,46 @@ TODO: EKSİK
 	$user->save();
 	return redirect()->back()->with('success', 'Kayıt başarılı');
 ```
+
+# Validations on View
+```PHP
+	@if(session()->has('success'))
+		{{ session()->get('success') }} // Session değişkeni kontrolü
+	@endif
+
+	@if(session()->has('danger'))
+		{{ session()->get('danger') }} // Session değişkeni kontrolü
+	@endif
+
+	@if($errors()->any())
+		// $request->validate() tarafında oluşan hatalar burada yakalanır...
+		<ul>
+		@foreach($errors()->all() as $error)
+			<li>{{ $error }}</li> // Tüm hataları ekrana listeler
+		@endforeach
+		</ul>
+	@endif
+
+
+	<form method="post" action="{{ route('createUser') }}">
+		<input type="text" name="fname" value="{{old('fname')}}" required> // Hata sonrası forma eski değerleri doldurabilmek için
+		@error('fname')
+		<div>{{ $message }}</div>  // Bu bölüm sadece "fname" sahası için bir hata oluşursa gösterecektir
+		@enderror
+
+		<input type="text" name="lname" value="{{old('lname')}}" required> // Hata sonrası forma eski değerleri doldurabilmek için
+		@error('lname')
+		<div>{{ $message }}</div>  // Bu bölüm sadece "lname" sahası için bir hata oluşursa gösterecektir
+		@enderror
+
+		<input type="text" name="email" value="{{old('email')}}" required> // Hata sonrası forma eski değerleri doldurabilmek için
+		@error('email')
+		<div>{{ $message }}</div>  // Bu bölüm sadece "email" sahası için bir hata oluşursa gösterecektir
+		@enderror
+	</form>
+
+```
+
 
 
 # HELPERS
@@ -544,6 +608,11 @@ public function __construct()
 - Bunun için **app/Http/Middleware/RedirectIfAuthenticated.php** dosyası açılır:
 - `return redirect('/userWelcome');` Oturum açtıysa ve login sayfasına tekrar gidiyorsa gitmesin! buraya yönlendirelim
 
+
+## @csrf
+- Cross Site Request Forgery anlamına gelir.
+- Form içine özel bir kod ekler.
+- Böylece, bizim sayfalarımızın başka bir uygulama içinden çağrılıp, doldurulup, gönderilmesi engellenmiş olur.
 
 ## Logout için blade
 ```
