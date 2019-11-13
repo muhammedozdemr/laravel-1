@@ -728,6 +728,12 @@ public function __construct()
 	->get();
 	print_r($users);
 	
+	$users = DB::table("user")
+	->join("company", "user.id", "company/user_id")
+	->where("company.name", "samsung")
+	->get();
+	print_r($users);
+	
 ```
 
 
