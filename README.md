@@ -724,12 +724,14 @@ public function __construct()
 
 	$users = DB::table("user")
 	->join("company", "user.id", "company/user_id")
+	->select("company.name", "user.fname")
 	->where("user.fname", "nuri")
 	->get();
 	print_r($users);
 	
 	$users = DB::table("user")
 	->join("company", "user.id", "company/user_id")
+	->select("company.name", "user.fname")
 	->where("company.name", "samsung")
 	->get();
 	print_r($users);
