@@ -1,7 +1,10 @@
-KAYNAK: https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST38jboldiQdds&index=7
-
 
 # LARAVEL NOTLARI
+
+## Faydalanılan Kaynaklar
+- [Kısa Kaynak, 20 Video, Laravel for Beginners, By Mr Digital](https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST38jboldiQdds)
+- [Uzun Kaynak, 43 Video, Laravel 6 tutorial, By php step by step](https://www.youtube.com/watch?v=ZE_IG7rF2a8&list=PL8p2I9GklV47fi-yiWkfRpbMV8PPaQDH4)
+
 
 ### Faydalı Kaynaklar
 - [laravel-cheat-sheet](https://github.com/piotr-jura-udemy/laravel-cheat-sheet)
@@ -9,8 +12,7 @@ KAYNAK: https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST3
 - [Laravel for Beginners 2019 by: Mr Digital](https://www.youtube.com/watch?v=9ugzTTvNvkM&list=PLgFB6lmeXFOqRC4Sc-RST38jboldiQdds)
 - [Eloquent ORM](https://www.tutsmake.com/laravel-eloquent-cheat-sheet-eloquent-orm/)
 - [Laravel Relationships](https://www.tutsmake.com/laravel-eloquent-relationships-inverse-relationships/)
-- []()
-
+- [Laravel 5 Cheat Sheet](https://learninglaravel.net/cheatsheet/)
 
 # KURULUM
 
@@ -122,6 +124,16 @@ http://127.0.0.1:8000
 - `DB_DATABASE=laravel_blog`
 - `DB_USERNAME=root`
 - `DB_PASSWORD=root`
+- Bir controller oluşturulur ve dosya başına şu kod eklenir: `use Illuminate\Support\Facades\DB;`
+```
+public function checkDb() {
+	return DB::select("select * from users"); // Yöntem 1
+	
+	$user = DB::select("select * from users"); // Yöntem 2
+	// print_r($user);
+	return $user;   // cevabı jSON formatta döner
+}
+```
 
 ### SQLite kullanmak istenirse DB Ayarı
 - BOŞ sqlite oluşturmak için: `touch database/myBlogs.sqlite`
@@ -625,12 +637,97 @@ public function __construct()
 ```
 
 
+# MIDDLEWARE
+
+- Http requestinin Controller'a gitmesi öncesinde bir **filtre** gibi çalışır.
+- `php artisan make:middleware AgeChecker` diyerek oluşturulur
+- 3 Tür Middleware vardır:
+  - Global Middleware
+  - Grouped Middleware
+  - Routed Middleware
+- Global Middleware **/app/Http/Kernel.php** içinde **$middleware[]** altında tanımlanır
+- Grouped Middleware **/app/Http/Kernel.php** içinde **$middlewareGroups[]** altında tanımlanır
+- Root tanımı yaparken hangi Middleware'e tabi tutulacağı seçilebilir.
+- Örnek: `Route::get('/login', 'AuthController@login'})->name('login')->middleware('guest');`
 
 
+# SESSION
+
+- $request->session()->set( 'info', $request->input() );
+- $DEGISKEN = $request->session()->get( 'info' );
+- **FLASH SESSION**, Sadece 1 defa kullanılabilen session değişkenidir
+- Flash Session Doldurma: `$request->session()->flash('data', 'mesaj/veri');`
+- Flash Session Kullanma: `{{ Session::get('data') }}`
 
 
+# ÖNEMLİ!
+
+- .env dosyasında değişiklik olursa: varsa, "php artisan serve" kapatılıp tekrar başlatılmalıdır
 
 
+# Query Builder
+ 
+```PHP
+	use Illuminate\Support\Facades\DB;   // !!! Dosyanın başına yaz!
+
+	$users = DB::table("user")->get();
+	print_r($users);
+
+
+	$users = DB::table("user")
+				->where("name", "NURİ")
+				->get(); // name="NURİ" olan kayıtları getirir
+
+	$users = DB::table("user")->find(3); // id'si 3 olan kayıt
+	
+	$users = DB::table("user")->count(); // Kayıt sayısı alma
+	$users = DB::table("user")->avg('id'); // "id" adlı sayısal alandaki verilerin ortalamasını verir
+	$users = DB::table("user")->sum('id'); // "id" adlı sayısal alandaki verilerin toplamını verir
+	
+
+	$users = DB::table("user")
+				->where("name", "NURİ")
+				->delete(); // Kayıt silme
+
+	$users = DB::table("user")
+				->insert([
+					"fname" => "NURİ",
+					"lname" => "AKMAN",
+					"email" => "nuri@gmail.com"
+				]); // Kayıt ekleme
+
+	$users = DB::table("user")
+				->where("name" => "NURİ")
+				->update([
+					"fname" => "nuri",
+					"lname" => "akman"
+				]]); // Kayıt güncelleme
+
+
+```
+
+# Query Builder - Joins
+
+```PHP
+	use Illuminate\Support\Facades\DB;   // !!! Dosyanın başına yaz!
+/*
+	company tablosu:
+	id
+	name
+	user_id
+
+	user tablosu:
+	id
+	fname
+	lname
+*/
+
+	$users = DB::table("user")
+	->join("company", "user.id", "company/user_id")
+	->get();
+	print_r($users);
+	
+```
 
 
 
