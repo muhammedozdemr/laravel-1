@@ -958,3 +958,17 @@ MAIL_ENCRYPTION=ssl
 ```
 
 
+
+
+
+https://www.udemy.com/course/laravel-6-framework/learn/lecture/16352616#overview
+
+Windows xampp için not: Bölüm 2/8'de açıklandı:
+
+copy server.php index.php
+copy public/.htaccess ./
+
+Böylece,  artık PUBLIC dizinine girmeye gerek kalmadan çalışacak
+
+
+
