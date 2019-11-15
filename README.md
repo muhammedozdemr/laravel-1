@@ -211,9 +211,39 @@ Artık, veritabanında posts (ve users) adlı tabloları görebiliriz
 
 ### Diğer tablolarla ilişkilendirme
 - Bir tablonun başka bir tablo ile olan bağlantısı için **belongTo()** kullanılır.
+- Örneğin **Posts** modeli içinde şu satır yazılarak, Posts tablosu ile Users tablosu bağlanmış olur:
+```PHP
+	public function user()
+	{
+		return $this->belongsTo('App\User');
+	}
+```
+- Bu şekilde **belongsTo** ile bağlanan veriyi view içinde kullanırken: {{ $post->user->name }}
+```
+
+
 
 ### Model Binding
-- TODO: Yazılacak
+- Route tanımı:
+```PHP
+Route::get('/users/show/{$id}', function () {
+    return view('Users@index');
+});
+```
+- Normal kullanım:
+```PHP
+public function showUsers($id) {
+    $user = User::findOrFail($id); // ilgili ID'ye sahip kaydı getir
+    return view('home', compact('user')); // view'i çağır
+}
+```
+- Data binding yaparak kullanım:
+```PHP
+public function showUsers(User $id) {  // ÖNEMLİ! Böyle yapınca, User adlı model'deki $id'ya sahip kayıt OTOMATİK gelir. Buna Model Binding denir
+    return view('home', compact('id'));
+}
+```
+- `showUsers(User $id)` cağrısında, User adlı model'deki $id'ya sahip kayıt OTOMATİK gelir. Buna **Model Binding** denir
 
 
 # ROUTE
@@ -412,7 +442,7 @@ public function test(Request $request)
 - Sayfa başına ekle: `use App\User`   (Veri çekeceğimiz tablo için)
 - **UserController.php** örnek içeriği: (class içeriği)
 ```PHP
-use App\User
+use App\User  // Dosyanın başına bu satır yazılır !!!
 public function ShowUsers() {
 	$arrKullanicilar = User::get(); // Tüm tablo içeriğini getirir // use App\User yazdığımız için böyle kullandık
 	// VEYA: $arrKullanicilar = \App\User::get(); // Tüm tablo içeriğini getirir
@@ -498,6 +528,7 @@ TODO: EKSİK
 	//	'email' >= 'required|email|unique:user,email,' . request()->id ,
 	]);
 
+	// Bu satıra gelmesi, validation'ı geçtiği anlamına gelir
 	$user = new User;
 	$user->fname = $request->fname;
 	$user->lname = $request->lname;
@@ -680,7 +711,7 @@ public function __construct()
 
 # ÖNEMLİ!
 
-- .env dosyasında değişiklik olursa: varsa, "php artisan serve" kapatılıp tekrar başlatılmalıdır
+- .env dosyasında değişiklik olursa: Varsa, "php artisan serve" kapatılıp tekrar başlatılmalıdır
 
 
 # Query Builder
@@ -706,6 +737,7 @@ public function __construct()
 	$users = DB::table("user")
 				->where("name", "NURİ")
 				->delete(); // Kayıt silme
+				->delete(4); // 4 Nolu ID'ye sahip satırı siler
 
 	$users = DB::table("user")
 				->insert([
@@ -757,10 +789,172 @@ public function __construct()
 ```
 
 
+# Localization (Multi-language)
+
+- /config/app/ içindeki lang="en" satırı ile dil tercihi yapılır
+- Dil seçimi için Route tanımlanır:
+```PHP
+Route::get('/{lang}', function () {
+	App::setlocale($lang)
+    return view('welcome');
+});
+```
+- /resource/lang dizini altında ilgili dil için klasör açılır: tr,en,hi gibi
+- /resource/lang/tr dizini içinde bir dosya tanımlanır. Örnek: msg.php
+/resource/lang/tr/msg.php içeriği
+```PHP
+	'Welcome'=>'Hoşgeldiniz',
+	'Docs' => 'Blgeler',
+	'Help'=> 'Yardım'
+```
+- view içinden bunu kullanabilmek için: `{{  __('msg.Welcome') }}`   msg: dosya adı, Welcome: Kelime
+
+
+# File Upload
+
+- `<form>` etiketi içnde şuna yer verilmeli: `enctype='multipart/form-dataupload'`
+- `$request->file('profil_resmi')->store('upload');`
+- Yukarıdaki komut yüklenen **dosyanın /storage/app/upload** dizinine kaydedilmesini sağlar
 
 
 
+# Eloquent
+
+- Eloquent sayesinde veritabanı katmanı xxx edilmiş olur. 
+- Eloquent sayesinde kod yazarken doğrudan SQL kullanılmaz. 
+- Tanım bölümünde DB olarak her ne tanımlanmış olursa olsun (mysql, sqlite, oracle, vb) sorgularımız özel bir ayar gerekmeksizin çalışır
+- Adım 1: `/.env` dosyası içinden DB bağlantısına ilişkin tanım yapılır
+- `DB_DATABASE=laravel_blog`
+- `DB_USERNAME=root`
+- `DB_PASSWORD=root`
+- Adım 2: `php artisan make:model User` komutu ile bir **Model** dosyası oluşturulur
+- Oluşan dosyanın yeri: **/app** dizini altındadır
+- En iyi ayar için, Model adı SINGLE, tablo adı ve controller PLURIAL olmalıdır
+- Adım 3: `php artisan make:controller Users` komutu ile bir **Model** dosyası oluşturulur
+- Oluşan dosyanın yeri: **/app/http/Controllers** dizini altındadır
+- **/app/http/Controllers/Users.php** içine şu yazılır:
+```PHP
+use App\User  // Dosyanın başına bu satır yazılır !!! 
+// Bu işlem, Model'i bğlamaktır. Model adı bağlantısı yapılmadan bu modele (Tablo) erişilemez.
+function index() {
+	return User::all();
+	$userInfo = User::
+				where('yas', '>', '20')
+				->orderBy('sehir', 'desc')
+				->take(3)  // Limit
+				->get();
+
+	$userInfo = User::find(2);
+	return view('db', compact('userInfo'))
+}
+```
+- Adım 4: Route tanımı yapılması
+```PHP
+Route::get('/db', function () {
+    return view('Users@index');
+});
+```
+- Adım 5: View tanımı yapılması
+```PHP
+	@foreach( userInfo as user)
+	{{ user->fname }}, {{ user->lname }}
+```
+- Adım 6: Eğer, Form verisi INSERT edilecekse:
+```PHP
+	$user = new User;
+	$user->fname = $request->fname;
+	$user->lname = $request->lname;
+	$user->email = $request->email;
+	$Sonuc = $user->save(); //$Sonuc == 1: Başarılı!
+	return redirect()->back()->with('success', 'Kayıt başarılı');
+```
+- Adım 7: Eğer, Form verisi UPDATE edilecekse:
+```PHP
+	$users = DB::table("user")
+				->where("name" => "NURİ")
+				->update([
+					"fname" => "nuri",
+					"lname" => "akman"
+				]]); // Kayıt güncelleme
+
+```
+- Elequent ile başka bir tablodan veri çekmek için:
+- `protected $table='company';`
+- Elequent ile tabloda timestamp kullanılmayacağını belirtmek için:
+- `protected $timestamps=false;`
 
 
+# DOMpdf Kullanma
+- Proje Sitesi: https://github.com/barryvdh/laravel-dompdf
+- Kütüphane, projeye eklenir: `composer require barryvdh/laravel-dompdf`
+- Yöntem 1: SERVICE olarak kullanmak için
+- **/config/add.php** dosyası içinde **services** başlığının sonuna eklenir:
+- `Barryvdh\DomPDF\ServiceProvider::class,`
+- Kullanmak İçin Örnek-1:
+```PHP
+$pdf = App::make('dompdf.wrapper');
+$pdf->loadHTML('<h1>Test</h1>');
+return $pdf->stream(); // Tarayıcıda PDF açar
+```
+- Kullanmak İçin Örnek-2:
+```PHP
+$HTML = '<h1>Test</h1>';
+$pdf = App::make('dompdf.wrapper');
+$pdf->loadHTML($HTML)->setPaper('a4', 'landscape')->setWarnings(false)->save('myfile.pdf')
+return $pdf->download('invoice.pdf'); // Tarayıcıda Donwnload ister
+```
+- Yöntem 2: ALIAS olarak kullanmak için
+- **/config/add.php** dosyası içinde **aliases** başlığının sonuna eklenir:
+- `'PDF' => Barryvdh\DomPDF\Facade::class,`
+- Kullanmak İçin Örnek:
+```PHP
+$pdf = PDF::loadView('pdf.invoice', $data);
+return $pdf->download('invoice.pdf');
+```
+
+
+# Custom 404 Page
+
+- `404.blade.php` gibi bir dosya hazırlanır.
+- `app\Exceptions\Handler.php` içindeki `render()` bloğu içine şu yazılır:
+```PHP
+	if($this->isHttpException($e)) {
+		$code = $e->getStatusCode();
+		if($code == 404) return response()->view('404');
+	}
+```
+
+
+# gMail üzerinden Mail Gönderme
+
+- .env doyasında ve gmai hesabında yapılacak değişiklikler sonrasında çalışır
+- gMail'de **Accounts/Security** sayfasında **Less secure app access** ON yapılır
+- `/.env` dosyasındaki ayarlar:
+```
+MAIL_DRIVER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_USERNAME=nuriakman@gmail.com
+MAIL_PASSWORD=GMAIL_PAROLAM_BURAYA
+MAIL_ENCRYPTION=ssl
+```
+- Mail Gönderme Örneği
+```PHP
+	$to_name="Hasan Çiçek"
+	$to_email="hasancicek@gmail.com"
+	$data=array(
+		"name"=>"Nuri Akman",
+		"body"=>"Merhaba !!!"
+	);
+	Mail::send('MAIL_FORMATI_VIEW_ADI', $data, function($message) use ($to_name, $to_email) {
+		$message->to($to_email)
+		->subject('Laravelden mesaj gönderme örneği');
+	});
+```
+- **MAIL_FORMATI_VIEW_ADI** adlı View içeriği:
+```
+	<h1>Merhaba {{ $name }}</h1>
+	{{ $body }}
+```
 
 
