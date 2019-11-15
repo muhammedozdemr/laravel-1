@@ -14,6 +14,9 @@
 - [Eloquent ORM](https://www.tutsmake.com/laravel-eloquent-cheat-sheet-eloquent-orm/)
 - [Laravel Relationships](https://www.tutsmake.com/laravel-eloquent-relationships-inverse-relationships/)
 - [Laravel 5 Cheat Sheet](https://learninglaravel.net/cheatsheet/)
+- [Geçici eMail Hesabı Hizmeti](https://temp-mail.org/)
+- [eMail Test Hizmeti](https://mailtrap.io/)
+
 
 # KURULUM
 
@@ -1017,5 +1020,54 @@ iaydin|5369
 - Bir çok şey oluşturur: `php artisan make:controller UserController --resource`
 - `php artisan make:model Students -m`
 - `php artisan migrate`
+
+
+
+
+# Update
+
+- Form Action şöyle olmalı: ` action='{{ route('update', $Student->id) }}' `
+
+# Form Submit (DELETE methodu ile)
+
+- Form Action: `action='POST'`
+- Form'un içinde : `{{ @scrf_field }} {{ method_field('delete') }} `
+
+
+# Authentication
+```PHP
+composer require laravel/ui --dev
+php artisan ui vue --auth
+php artisan migrate
+use Illuminate\Support\Facades\Hash; // Dosyanın başına yaz!
+use Illuminate\Support\Facades\Auth; // Dosyanın başına yaz!
+Auth::id                                  // Oturumu açmış olan kullanıcının ID'di
+Auth::user()->password                    // Oturumu açmış olan kullanıcının parolası (Hashli)
+Auth::logout()                            // Oturum Kapat
+Hash::make($request->password)            // Hash'li hale getirme
+Hash::check($girilenParola, $eskiParola)  // Parola karşılaştırması
+
+public function __construct()
+{
+    $this->middleware('auth'); // __construct tanımında bu kod olan sayfalara giriş yapılması şartı aranır
+}
+
+```
+- HOME sayfasına akışı yönlendirme: `return redirect()->route('home')->with('success', 'Kayıt başarılı');`
+- Son gelinen sayfaya akışı yönlendirme: `return redirect()->back()->with('success', 'Kayıt başarılı');`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
