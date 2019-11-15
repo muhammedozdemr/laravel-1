@@ -972,3 +972,50 @@ Böylece,  artık PUBLIC dizinine girmeye gerek kalmadan çalışacak
 
 
 
+
+
+
+
+# Regex Tablosu
+
+Başlık|Kodu
+---|---
+github|a_!
+gmail|a_!+
+firefox|a_+x4
+isimtescil|q_q
+ssh|a_!+g
+bsm78na|a_+x3.
+hm|dr_+x3.
+fb|_+x5
+twi|q_tw
+instgr|q_ig
+udem|q_u
+stackoverflow|????
+iaydin|5369
+
+
+```HTML
+
+<input list="people-I-love" placeholder="Start typing...">
+<datalist id="people-I-love">
+  <option value="My wife">
+  <option value="Carsten">
+  <option value="@imogenf">
+  <option value="@stereobooster">
+  <option value="@fabien0102">
+  <option value="@mpotNotlara devamomin">
+  <option value="@mweststrate">
+  <option value="@cpojer">
+  <option value="@dabit3">
+  <option value="@_darkfadr">
+</datalist>
+
+```
+
+
+- Bir çok şey oluşturur: `php artisan make:controller UserController --resource`
+- `php artisan make:model Students -m`
+- `php artisan migrate`
+
+
