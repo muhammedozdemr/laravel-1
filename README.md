@@ -68,7 +68,7 @@ composer global require laravel/installer
 
 ### DB için ön hazırlık
 - `vi app/Providers/AppServiceProvider.php`
-- Dosya başına: `use Illuminate\Support\Facades\Scheme;`
+- Dosya başına: `use Illuminate\Support\Facades\Schema;`
 - `boot()` bölümüne: `Schema::defaultStringLength(191);`  Böylece "Specified key was too long" hatası engellenecektir
 
 ### PROJE DİZİNİMİZ:
@@ -220,7 +220,7 @@ Artık, veritabanında posts (ve users) adlı tabloları görebiliriz
 
 ### Rooting tanımı sonrasında 404 hatası oluşursa:
 - `sudo a2enmod rewrite` komutu çalıştırılır
-- `vim  /etc/apache2/apache2.conf` komutu ile aşağıdaki bölümün olması sağlanır  **AllowOverride All** olduğuna emin ol!
+- `vim  /etc/apache2/apache2.conf` komutu ile açılan dosyada **<Directory /var/www/>** bölümünde aşağıdaki bölümün olması sağlanır  **AllowOverride All** olduğuna emin ol!
 ```
 <Directory /var/www/>
     Options Indexes FollowSymLinks
@@ -753,6 +753,11 @@ public function __construct()
 	->where("company.name", "samsung")
 	->get();
 	print_r($users);
+
+
+    $users = DB::table("user")
+    ->select("fname", "lname")
+    ->toSql();  // SQL OLARAK NE YADIĞIMIZI GÖREBİLİRİZ
 	
 ```
 
