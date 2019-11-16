@@ -80,27 +80,31 @@ composer global require laravel/installer
 ### Proje için APACHE ayarı
 - `vi /etc/apache2/sites-enabled/000-default.conf`
 - **Şunu ekle:**
-- <VirtualHost *:80>
-- 	ServerName laravel.development
-- 	DocumentRoot /var/www/html/lara/blog/public
-- </VirtualHost>
-- **VEYA**
-- Yukarıdaki VirtualHost tanımını içeren yeni bir dosyayı aynı dizinde oluştur. 
-- Örnek: laravel-blog-deneme.conf içeriği:
-- <VirtualHost *:80>
-- 	ServerName laravel.development
-- 	DocumentRoot /var/www/html/lara/blog/public
-- </VirtualHost>
+```
+<VirtualHost *:80>
+	ServerName laravel.development
+	DocumentRoot /var/www/html/lara/blog/public
+</VirtualHost>
+```
+**VEYA**
+```
+Yukarıdaki VirtualHost tanımını içeren yeni bir dosyayı aynı dizinde oluştur. 
+Örnek: laravel-blog-deneme.conf içeriği:
+<VirtualHost *:80>
+	ServerName laravel.development
+	DocumentRoot /var/www/html/lara/blog/public
+</VirtualHost>
+```
 - Devreye girmesi için servisi tekrar başlat: `sudo service apache2 restart`
 - Veya Devreye girmesi için ayarları tekrar okut: `sudo service apache2 reload`
-- NOT: Windows'da bunun için **Host File Editor** adlı program kullanılabilir
+- NOT: Windows'da bunun için [Host File Editor](https://hostsfileeditor.com/) adlı program kullanılabilir
 
 ### Gerekli dizinlere YAZMA yetkisi verilmesi
 ```BASH
 cd /var/www/html/lara/
-chmod -R g+w storage/
-chmod -R g+w bootstrap/cache/
-chown -R $USER:www-data /var/www/html/lara/
+sudo chmod -R g+w storage/
+sudo chmod -R g+w bootstrap/cache/
+sudo chown -R $USER:www-data /var/www/html/lara/
 ```
 
 ### Proje için HOSTS ayarı
@@ -111,8 +115,9 @@ chown -R $USER:www-data /var/www/html/lara/
 ### Tarayıcıdan Test Edelim
 - http://laravel.development
 
-### Yerel laravel Sunucusunu Başlatma
-Proje dizininde olduğunuza emin olun!
+### Yerel laravel sunucusunu başlatma
+- Proje dizininde olduğunuza emin olun! 
+- Doğru dizinde değilseniz şöyle bir hata alabilirsiniz: **Could not open input file: artisan**
 ```BASH
 cd /var/www/html/lara/blog
 php artisan serve
@@ -128,7 +133,11 @@ http://127.0.0.1:8000
 - `DB_DATABASE=laravel_blog`
 - `DB_USERNAME=root`
 - `DB_PASSWORD=root`
-- Bir controller oluşturulur ve dosya başına şu kod eklenir: `use Illuminate\Support\Facades\DB;`
+- Bir controller oluşturulur: `php artisan make:controller UserController`
+- ve dosya başına şu kod eklenir: `use Illuminate\Support\Facades\DB;`
+- En iyi ayar için, Model adı SINGLE/TEKİL, tablo adı ve controller PLURIAL/ÇOĞUL olmalıdır
+
+
 ```
 public function checkDb() {
 	return DB::select("select * from users"); // Yöntem 1
@@ -178,9 +187,9 @@ public function checkDb() {
         });
     }
 ```
-Diğer dosyalar siliniyor
 - Tanımladığımız **users** tablosunu işleme alabilmek için:
 - Proje dizinine geçilir ve `php artisan migrate` komutu uygulanır
+- Bu işlemle birlikte daha önceki tablolar/veriler silinir!!!
 
 Tabloda değişiklik olursa, 
 - önce database/migrations dizinine gidilir
@@ -222,9 +231,6 @@ Artık, veritabanında posts (ve users) adlı tabloları görebiliriz
 	}
 ```
 - Bu şekilde **belongsTo** ile bağlanan veriyi view içinde kullanırken: {{ $post->user->name }}
-```
-
-
 
 ### Model Binding
 - Route tanımı:
@@ -253,7 +259,7 @@ public function showUsers(User $id) {  // ÖNEMLİ! Böyle yapınca, User adlı 
 
 ### Rooting tanımı sonrasında 404 hatası oluşursa:
 - `sudo a2enmod rewrite` komutu çalıştırılır
-- `vim  /etc/apache2/apache2.conf` komutu ile açılan dosyada **<Directory /var/www/>** bölümünde aşağıdaki bölümün olması sağlanır  **AllowOverride All** olduğuna emin ol!
+- `vim  /etc/apache2/apache2.conf` komutu ile açılan dosyada **<Directory /var/www/>** bölümünde **AllowOverride None** ifadesi  **AllowOverride All**  olarak değiştirilir.
 ```
 <Directory /var/www/>
     Options Indexes FollowSymLinks
@@ -837,7 +843,7 @@ Route::get('/{lang}', function () {
 - `DB_PASSWORD=root`
 - Adım 2: `php artisan make:model User` komutu ile bir **Model** dosyası oluşturulur
 - Oluşan dosyanın yeri: **/app** dizini altındadır
-- En iyi ayar için, Model adı SINGLE, tablo adı ve controller PLURIAL olmalıdır
+- En iyi ayar için, Model adı SINGLE/TEKİL, tablo adı ve controller PLURIAL/ÇOĞUL olmalıdır
 - Adım 3: `php artisan make:controller Users` komutu ile bir **Model** dosyası oluşturulur
 - Oluşan dosyanın yeri: **/app/http/Controllers** dizini altındadır
 - **/app/http/Controllers/Users.php** içine şu yazılır:
@@ -1022,7 +1028,7 @@ iaydin|5369
 ```
 
 
-- Bir çok şey oluşturur: `php artisan make:controller UserController --resource`
+- Bir çok şey olur: `php artisan make:controller UserController --resource` 
 - `php artisan make:model Students -m`
 - `php artisan migrate`
 
