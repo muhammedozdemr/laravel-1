@@ -43,7 +43,7 @@ composer global require laravel/installer
 ```
 
 ### PATH Ayarları:
-- `sudo vi /etc/environment`
+- `sudo vi /etc/environment` veya  `sudo vi ~/profile`
 - Şöyle görünebilir:  **PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"**
 - Bu PATH değişkeninin başına şu kod eklenir: `$HOME/.config/composer/vendor/bin:`
 - PATH="**$HOME/.config/composer/vendor/bin:**/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
@@ -55,6 +55,7 @@ composer global require laravel/installer
 - `laravel new /var/www/html/blog`
 - veya
 - `composer create-project --prefer-dist laravel/laravel /var/www/html/blog`
+- `npm install` ile npm paketlerinin yüklenmesi sağlanır
 
 ### Yeni Laravel Uygulamamızın ayarları
 - **config/app.php** dosyası içinde timezone ve locale için ayarlar vardır.
@@ -248,11 +249,21 @@ public function showUsers($id) {
 ```
 - Data binding yaparak kullanım:
 ```PHP
-public function showUsers(User $id) {  // ÖNEMLİ! Böyle yapınca, User adlı model'deki $id'ya sahip kayıt OTOMATİK gelir. Buna Model Binding denir
+public function showUsers(User $id) {  // ÖNEMLİ! Böyle yapınca, User adlı model'deki $id'ya sahip kayıt (Yani Tablodaki PRIMARY KEY) OTOMATİK gelir. Buna Model Binding denir
     return view('home', compact('id'));
 }
 ```
 - `showUsers(User $id)` cağrısında, User adlı model'deki $id'ya sahip kayıt OTOMATİK gelir. Buna **Model Binding** denir
+
+- slug'dan yola çıkarak ID'ye erişmek için
+```PHP
+    public function getRouteKeyNameForArticle()
+    {
+        return 'slug'; 
+    }
+```
+- MODEL'de bu şekilde kullanım şu anlama gelir: 
+- `Article::where('slug', $article)->first();`
 
 
 # ROUTE
@@ -287,6 +298,7 @@ Route::view('users', 'users');
 
 
 // Controller'in parametre ile çağrılması:
+// DİKKAT: Route'da kullanılan isim ile Controller'daki isim AYNI OLMALI!
 Route::get('/users/user/{id}', 'UserController@showUsers'});
 
 // Controller'in BAZEN parametre ile çağrılması:
@@ -321,7 +333,8 @@ public function showUsers($id) {
 - **SAYFAADI.blade.php** olarak isimlendirilir
 - Örnekteki "isim" adlı değişkeni gösterecek view dosyası içeriği:
 ```
-Merhaba {{ $isim }}
+Merhaba {{ $isim }}    // escape ederek yazar
+Merhaba {!! $isim !!}  // escape ETMEDEN yazar (XSS açığı oluşabilir)
 ```
 
 # BLADE
@@ -330,6 +343,8 @@ Merhaba {{ $isim }}
 - Blade içinde değişken saha tanımlama: `@yield('BLOGICERIGI')`
 - KULLANIMI:
 ```PHP
+@yield("content")   // Şablon dosyada "content" adlı bir alan tanımlar
+
 @extends("includes.master")   // Site ana şablonu
 
 @include("includes.navbar")   // Bağımsız dosyadan NAVBAR çektik
@@ -457,7 +472,11 @@ public function ShowUsers() {
 	// VEYA: $arrKullanicilar = \App\User::get(); // Tüm tablo içeriğini getirir
 
 	$arrKullanicilar = User::get(); // Tüm tablo içeriğini getirir
+    $arrKullanicilar = User::latest()->get(); // Son kayıttan başlayarak getirir // Order by updated_by DESC
+    $arrKullanicilar = User::latest('published_at')->get(); // Son kayıttan başlayarak tüm satırları getirir // Order by published_ad DESC
+    $arrKullanicilar = User::take(5)->latest('published_at')->get(); // Son kayıttan başlayarak son 5 satırı getirir // Order by published_ad DESC
 	$arrKullanicilar = User::all(); // Tüm tablo içeriğini getirir
+    $arrKullanicilar = User::take(3); // Sadece 3 kayıt getirir
 	$arrKullanicilar = User::where('adi', 'nuri')->get(); // where adi = 'nuri'
 	$arrKullanicilar = User::paginate(20); // Her ekranda 20 kayıt olacak biçimde getir
     return view("sayfalar.kullanicilar", compact('arrKullanicilar') );
@@ -518,10 +537,9 @@ Veritabanına dummy kayıt ekleme işini yapar.
 
 
 
-# FORM Nesnesi
-TODO: EKSİK
-- protected guarded = ['id'];
-- protected fillable = ['title', 'body'];
+# Model'de ilave kontroller
+- protected guarded = ['id']; // Bu saha update edilemez
+- protected fillable = ['title', 'body']; // Sadece bu sahalar update edilebilir.
 - **419 - Page Expired** hatasını önlemek için FORM etiketi içine içine şu yazılır: `@csrf`
 - Insert İçin 
 - Update İçin 
@@ -544,6 +562,15 @@ TODO: EKSİK
 	$user->email = $request->email;
 	$user->save();
 	return redirect()->back()->with('success', 'Kayıt başarılı');
+
+
+    // Yukardaki kod bloğunun alternatif kullanımı:
+    User::create([
+        'fname' = $request->fname,
+        'lname' = $request->lname,
+        'email' = $request->email ]);
+
+
 ```
 
 # Validations on View
@@ -572,10 +599,11 @@ TODO: EKSİK
 		<div>{{ $message }}</div>  // Bu bölüm sadece "fname" sahası için bir hata oluşursa gösterecektir
 		@enderror
 
-		<input type="text" name="lname" value="{{old('lname')}}" required> // Hata sonrası forma eski değerleri doldurabilmek için
-		@error('lname')
+		<input type="text" name="lname" class="{{ $error->has('lname') ? 'has-error' : '' }}" value="{{old('lname')}}" required> // YÖNTEM 1: Hata sonrası forma eski değerleri doldurabilmek için
+        <input type="text" name="lname" class="{{ @error('lname') has-error @enderror" value="{{old('lname')}}" required> // YÖNTEM 2: Hata sonrası forma eski değerleri doldurabilmek için
+		@if($error->has('lname'))
 		<div>{{ $message }}</div>  // Bu bölüm sadece "lname" sahası için bir hata oluşursa gösterecektir
-		@enderror
+		@endif
 
 		<input type="text" name="email" value="{{old('email')}}" required> // Hata sonrası forma eski değerleri doldurabilmek için
 		@error('email')
@@ -1035,14 +1063,25 @@ iaydin|5369
 
 
 
-# Update
+# Update Form
 
 - Form Action şöyle olmalı: ` action='{{ route('update', $Student->id) }}' `
+- Veya şöyle olmalı: ` action='/update/{{ $Student->id }}' `
 
 # Form Submit (DELETE methodu ile)
 
 - Form Action: `action='POST'`
-- Form'un içinde : `{{ @scrf_field }} {{ method_field('delete') }} `
+- Form'un içinde : 
+```
+{{ @scrf_field }}
+{{ method_field('delete') }}
+``
+**VEYA:**
+```
+@scrf
+@method('DELETE')
+```
+
 
 
 # Authentication
@@ -1076,7 +1115,178 @@ public function __construct()
 
 
 
+# LaraCast
 
+- $var1 => $request["id"] ?? 0;  // "id" YOKSA "0" döner
+- abort('404', 'Mesaj'); // 404 vererek program akışını keser
+
+**MODEL OLUŞTURULMAMIŞSA:**
+```
+// '.\DB' yazarak kullanmak yerine 'DB' yazıp kullanmak için
+// dosya başın 'use DB;' yazılır
+
+$post = .\DB::table('posts')->where('slug', $slug)->first();
+
+if( !$post ) {
+    abort('404')
+}
+
+return view('post'), [
+    'post' =>$post
+])
+```
+
+**MODEL OLUŞTURULMUŞSA (1):**
+```
+// dosya başın 'use DB;' yazılır
+// dosya başın 'use App\Post;' yazılır
+
+$post = Post::where('slug', $slug)->firstOrFail();
+
+return view('post'), [
+    'post' =>$post
+])
+```
+
+**MODEL OLUŞTURULMUŞSA (2):**
+```
+// dosya başın 'use DB;' yazılır
+// dosya başın 'use App\Post;' yazılır
+
+return view('post',[
+    'post' => Post::where('slug', $slug)->firstOrFail();
+])
+```
+
+Yukarıdaki 3 kod bloğu da AYNI işi yapar.
+
+
+
+# Migration
+
+- migration dosyası oluşturma:
+php artisan make:migration create_posts_table
+
+- migration'ı çalıştırma
+php artisan migrate
+
+- Tabloya TITLE sutununu ekleme:
+php artisan make:migration add_title_to_posts_table
+$table->string('title');
+
+- Tablodan TITLE sutununu silme:
+down() bölümüne:
+$table->dropColumn('title');
+
+- migration'ı çalıştırma
+php artisan migrate
+
+- Son migration'ı geri alma
+php artisan migrate:rollback
+
+- Tüm tabloları SİLİP, sıfırdan migration yapma
+php artisan migrate:fresh
+
+- Oluşturma sırası: migration, controller, model
+- model'i, migration'u (-m) ve controller'ı (-c) oluştur: ÖNEMLİ KOLAYLIK
+php artisan make:model Project -mc
+
+
+# tinker
+- Php - Laravel Playground: Komut satırından kod yazıp test etme imkanı sunar.
+php artisan tinker
+App\ModelAdı::all();  // Tablodaki tüm satırları gösterir
+
+
+# Site Templati Ayarlama
+KAYNAK: https://laracasts.com/series/laravel-6-from-scratch/episodes/15?autoplay=true
+Şablon dosyası: https://templated.co/simplework
+**index.htm** dışındaki tüm dosyaları **public** dizinine kopyala
+layout.blade.php dosyasını oluştur.
+**index.htm** içeriğini bu dosyaya yapıştır
+```
+{{ Request::path() == '/' ? 'menu-active' : '' }}
+{{ Request::path() == 'about' ? 'menu-active' : '' }}
+**veya**
+{{ Request::path('/') ? 'menu-active' : '' }}
+{{ Request::is('about') ? 'menu-active' : '' }}
+{{ Request::is('urun*') ? 'menu-active' : '' }} // URL' urun* ile devam ediyor
+```
+
+# 7 Controller Actions
+
+- index : Listeleme işlemi
+- show : Sadece 1 kayıt gösterir
+- create : Yeni bir kayıt için gerekli olan View'i hazırlar
+- store : Submit edilen create formundan gelen veriyi kaydetme işini yapar
+- edit : Edit edilecek kaydı gösteren View'i hazırlar
+- update : Submit edilen edit formundan gelen veriyi güncelleme işini yapar
+- destroy : Kaydın silinmesi işini yapar
+
+
+
+
+- index : Render of a list of resource
+- show : Show a single resource
+- create : Show a view to create a noe resource
+- store : Persist the new resource
+- edit : Show a view to edit existing resource
+- update : Persist the edited resource
+- destroy : Delete the resource
+
+
+Yukarıdaki 7 fonksiyonu da hazır olarak sunan komut:
+`php artisan make:controller ProjectsController -r -m Project`
+
+
+
+# Restful Routing
+Metodlar: GET, POST, PUT, DELETE, PATCH
+PUT ve PATCH genelde aynı amaç için kullanılırlar
+```
+GET    /articles
+GET    /articles/:id
+POST   /articles
+PUT    /articles/:id
+DELETE /articles/:id
+
+GET    /videos
+GET    /videos/create
+POST   /videos
+GET    /videos/2
+GET    /videos/2/edit
+PUT    /videos/2
+DELETE /videos/2
+```
+
+
+# Reduce Duplication
+- KAYNAK: https://laracasts.com/series/laravel-6-from-scratch/episodes/27?autoplay=true
+- Controller içinde "validate" için bi metod oluşturulur,
+- Bu medod lazım olan yerde kullanılır
+
+
+# Consider Named Routes
+KAYNAK: https://laracasts.com/series/laravel-6-from-scratch/episodes/28?autoplay=true
+- Model içinde şu kod yazılır:
+```
+public function path() {
+    return route('articles.show'), $this)
+}
+```
+- Böylece, mesela Update sonrası gidilecek sayfa şu şekilde tanımlanır:
+```
+    return redirect( $article->path() );
+```
+
+
+TEMPLATE Örnekleri: https://templated.co/simplework
+
+
+
+Burada Kaldım:  
+
+Eloquent   https://laracasts.com/series/laravel-6-from-scratch/episodes/29?autoplay=true
 
 
 
