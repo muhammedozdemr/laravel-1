@@ -1284,9 +1284,123 @@ TEMPLATE Örnekleri: https://templated.co/simplework
 
 
 
-Burada Kaldım:  
 
-Eloquent   https://laracasts.com/series/laravel-6-from-scratch/episodes/29?autoplay=true
+# Database Integrity
+- Foreign Key İle tabloları bağlama ve CASCADE etme işlemidir
+
+- **Articles** Modeli tanımı içinde şu yapılır:
+```
+	$table->bigIncrements('id');
+	$table->string('title');
+	$table->string('ozet');
+	$table->string('body');
+	$table->integer('user_id');  // Bu article hangi User tarafından oluşturulmuş takibi için
+	$table->string('password');
+
+	$table->foreign('user_id') // Article tablosundaki saha adı
+		->references('id')     // Users tablosunda karşılık geldiği saha id
+		->on('users')          // karşılık geldiği tablo adı
+		-onDelete('cascade');  // Eğer, User tablosunda silme yapılırsa, karşılık gelen Article'lar otomatik silinir!
+
+```
+
+
+
+# Elequent Relationships
+
+- Article Model'i içinde:
+- `public function user(){ return $this->belongsTo(User::class); }`
+- Yukarıda, fonksiyon adı "user()" olarak verildiği için "user" tablosuna "user_id" field'ı ile bağlanacağını varsayar
+- `public function author(){ return $this->belongsTo(User::class, 'user_id'); }`
+- Yukarıda, fonksiyon adı "author()" olarak verildiği için, 
+- normalde "user" tablosuna "author_id" field'ı ile bağlanacağını varsayar.
+- Bunu değiştirmek için 'user_id' parametresi eklenir
+
+
+- User Model'i içinde:
+- `public function articles(){ return $this->hasMany(Articles::class); }`
+- Şöyle anlamlandırılabilir: `select * from articles where user_id = ?`
+- `public function articles(){ return $this->hasMany(Projects::class); }`
+- Şöyle anlamlandırılabilir: `select * from Projects where user_id = ?`
+
+- Project Model'i içinde:
+- `public function articles(){ return $this->belongsTo(User::class); }`
+- Şöyle anlamlandırılabilir: `select * from user where project_id = ?`
+
+
+$user = User::find(1); // select * from user where user_id = 1
+$user->projects;       // select * from projects where user_id = $user->id
+$user->projects->first();
+KAYNAK: https://laracasts.com/series/laravel-6-from-scratch/episodes/30?autoplay=true
+
+\App\Article::find(1);       // 1 nolu Article'ı bul
+\App\Article::find(1)->user; // 1 Nolu article'ın User'ının tüm bilgilerini gösterir
+\App\Article::find(1)->user->name; // 1 Nolu article'ın User'ının ADINI gösterir
+
+
+hasMany  <==> belongsTo
+
+hasOne    Sadece 1 tane   hasOne Profile
+
+hasMany   Çok tane        hasMany Articles
+
+belongsTo Diğerine aittir. Articles, User'a aittir.
+
+manyToMany   
+
+
+- Model tanımında, "primary key" sahası `$table->bigIncrements('id')` olarak tanımlanır
+- Başka bir tablo ile ilişkilendirilecek saha (foreign key) `$table->unsignedBigInteger('user_id')` olarak tanımlanır
+
+
+```
+php artisan migrate:fresh // Veriyi  siler, modeli yeniden oluşturur
+php artisan tinker
+factory(App\User::class)->create(); // User tablosuna DUMY 1 adet kayıt ekler
+factory(App\User::class, 25)->create(); // User tablosuna DUMY 25 adet kayıt ekler
+```
+
+Articles için Factory tanımlama (Böylece, articles tablosu için DUMY data üretimi yapacağız)
+```
+php artisan help make:factory   // Komut hakkında açıklama verir
+
+
+php artisan make:factory ArticleFactory -m "App\Article" // App\Article modeli için ArticleFactory adında sınıf oluşturur
+
+'user_id'=> $faker->factory(\App\User::class),  // Bu satır için "UserFactory" olması gerekir. Veriyi oradan çekecek.
+'title'  => $faker->sentence,
+'ozet'   => $faker->paragraph,
+'makale' => $faker->paragraph(5),
+
+
+php artisan make:factory UserFactory -m "App\User" // App\User modeli için UserFactory adında sınıf oluşturur
+
+'name' => $faker->name,
+'email' => $faker->unique()->safeEmail,
+'email_verified_at' => now(),
+'remember_token' >= Str:random(10),
+
+
+factory(App\Article::class, 5)->create();  // 5 adet Article ve 5 adet de User oluşturur. Yeni oluşturulan User'ın ID'si Yeni oluştutulan Article'da kullanılır. O Article, O User'a ait olur yani.
+
+factory(App\Article::class, 5)->create(['user_id' => 21]);  // 5 adet Article oluşturur, hepsinin de User_id'si 21 nolu kullanıcıdır
+factory(App\Article::class, 3)->create(['user_id' => 18]);  // 3 adet Article oluşturur, hepsinin de User_id'si 18 nolu kullanıcıdır
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
