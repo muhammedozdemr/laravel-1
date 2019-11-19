@@ -43,11 +43,11 @@ composer global require laravel/installer
 ```
 
 ### PATH Ayarları:
-- `sudo vi /etc/environment` veya  `sudo vi ~/profile`
+- `sudo vi ~/.bashrc` // Aslında doğrusunun şu olduğu yazıyor: `sudo vi /etc/environment` veya `sudo vi ~/.profile` 
 - Şöyle görünebilir:  **PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"**
 - Bu PATH değişkeninin başına şu kod eklenir: `$HOME/.config/composer/vendor/bin:`
 - PATH="**$HOME/.config/composer/vendor/bin:**/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
-- Değişikliğin devreye girmesi için şu komut çalıştırılır: `source /etc/environment`
+- Değişikliğin devreye girmesi için şu komut çalıştırılır: `source ~/.bashrc`
 
 # LARAVEL
 
@@ -513,6 +513,8 @@ public function ShowUsers() {
 Veritabanına dummy kayıt ekleme işini yapar.
 
 ### Dummy kayıt oluşturma
+
+- KAYNAK: https://github.com/fzaninotto/Faker
 - Önce sınıf oluşturalım: `php artisan make:factory PostFactory`
 - **database/factories/PostFactory.php** oluştu.
 - Kullanılabilecek bazı faker'ler:
@@ -533,6 +535,31 @@ Veritabanına dummy kayıt ekleme işini yapar.
 - `$users->each(function ($user){ factory('App\Post', 10)->create([user_id]=>$user->id)};);`
 
 
+- Yerelleştirilmiş veri üretme:
+```PHP
+$faker = Faker\Factory::create('tr_TR'); // Üretilecekleri Türkçe üretsin...
+$factory->define(App\Kitap::class, function (Faker\Generator $faker) use (faker) {
+    return [
+        'name'  => $faker->name,
+        'cpf'   => $faker->cpf,
+        'zip'   => $faker->postcode,
+        'state' => $faker->state,  
+    ];
+});
+```
+- **VEYA**
+```PHP
+$faker = Faker\Factory::create('fr_FR');
+for ($i = 0; $i < 10; $i++) {
+  echo $faker->name, "\n";
+}
+```
+
+
+
+
+
+for ($i = 0; $i < 10; $i++) {echo $faker->name, "\n"; }
 
 
 
@@ -1388,11 +1415,17 @@ factory(App\Article::class, 3)->create(['user_id' => 18]);  // 3 adet Article ol
 ```
 
 
+`php artisan tinker` ile Factory Kullanımı:
+```PHP
+$faker = Faker\Factory::create('tr_TR');
+use \App\Yazar;
+$Yazar = new Yazar;
+$Yazar->yazarAdi = $faker->name;
+$Yazar->save();
+```
 
 
-
-
-
+$yazar = factory(App\Yazar::class, 10)->create();
 
 
 
