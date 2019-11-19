@@ -125,6 +125,20 @@ php artisan serve
 http://127.0.0.1:8000
 ```
 
+### Sistem Bakım Modu
+- `php artisan down` Sistemi Bakım Moduna alır
+- `php artisan up` Sistemi Bakım Modundan çıkarır
+- Şu mesajı göstererek bakım moduna al:
+- `php artisan down --message="Upgrading Database" --retry=60`
+- Şu IP'lerin erişimine izin vererek diğer ziyaretçiler için sistemi bakım moduna al:
+- `php artisan down --allow=127.0.0.1 --allow=192.168.0.0/16`
+- Bakım modunda gösterilecek sayfaya ait view şurada:
+- `resources/views/errors/503.blade.php`
+
+### Projeyi Yayına Alma
+- Detay Bilgi: https://laravel.com/docs/6.x/deployment
+
+
 # VERİTABANI
 
 ### DB İçin Bağlantı Kurulması
@@ -293,6 +307,7 @@ Route::get('/home', function () {
     return view('sayfalar.home', compact('isim'));
 });
 
+
 // Route ile çağrının view ile cavaplanması
 Route::view('users', 'users');
 
@@ -301,24 +316,67 @@ Route::view('users', 'users');
 // DİKKAT: Route'da kullanılan isim ile Controller'daki isim AYNI OLMALI!
 Route::get('/users/user/{id}', 'UserController@showUsers'});
 
-// Controller'in BAZEN parametre ile çağrılması:
+
+// Controller'in BAZEN parametresiz çağrılması:
 Route::get('/users/user/{id?}', function ($id=0) {
     return view('sayfalar.home', compact('id'));
 });
+
 
 // Route için isim verilmesi:
 Route::get('/users/user/{id}', 'UserController@showUsers'})->name("KullaniciGoster");
 // Bunu view içinde kullanmak için: <a href={{ route('KullaniciGoster') }}>GÖSTER</a>
 
+
+// Route için MIDDLEWARE tanılaması:
+Route::get('/users/user/{id}', 'UserController@showUsers'})->name("KullaniciGoster")->middleware('auth');
+// Böylece, artık bu sayfalara sadece login olmuş kişiler girebilir.
+
+
 // Bir yere yöneltilen akışın başka yere yönelndirilmesi
 Route::redirect('/urunler', '/coksatanlar'});
 
+Route::get($uri, $callback);
+Route::post($uri, $callback);
+Route::put($uri, $callback);
+Route::patch($uri, $callback);
+Route::delete($uri, $callback);
+Route::options($uri, $callback);
+Route::any($uri, $callback);
+Route::redirect('/here', '/there', 301);
+Route::permanentRedirect('/here', '/there');
+
+
+// REGULAR EXPRESSION ile kullanım
+Route::get('user/{name}', function ($name) {
+    //
+})->where('name', '[A-Za-z]+');
+
+
+Route::get('user/{id}', function ($id) {
+    //
+})->where('id', '[0-9]+');
+
+
+Route::get('user/{id}/{name}', function ($id, $name) {
+    //
+})->where(['id' => '[0-9]+', 'name' => '[a-z]+']);
 
 
 // Controller tanımı:
 public function showUsers($id) {
     $user = User::findOrFail($id); // ilgili ID'ye sahip kaydı getir
     return view('home', compact('user')); // view'i çağır
+}
+
+
+// GLOBAL PATERN TANIMLAMA şu dosya içinde yapılır:
+// app/Providers/RouteServiceProvider.php
+
+public function boot()
+{
+    Route::pattern('id', '[0-9]+'); // Artık ID parametresi HER YERDE NUMERİK olmak zorundadır.
+    parent::boot();
 }
 
 ```
