@@ -78,6 +78,33 @@ Route::get('/nuri', function () {
         });
 ```
 
+
+### Facroty
+- **database/factories/KitapFactory.php** içine:
+```PHP
+$factory->define(\App\Kitap::class, function (Faker $faker) {
+    return [
+         'kitapAdi' => $faker->title,
+         'kitapAciklama' => $faker->paragraph,
+         'yayinYili' => $faker->numberBetween(1950, date("Y")),
+         'yazar_id' => $faker->numberBetween(1, 50),
+         'yayinevi_id' => $faker->numberBetween(1, 20),
+    ];
+});
+```
+
+### Seeder
+
+- **database/seeds/DatabaseSeeder.php** içine:
+```PHP
+    public function run()
+    {
+        // $this->call(UsersTableSeeder::class);
+        factory(App\Kitap::class, 100)->create();
+        factory(App\Yayinevi::class, 10)->create();
+        factory(App\Yazar::class, 20)->create();
+    }
+```
 ### Dosyaların Oluşturulması
 Model, Migration, Factory ve Controller dosyalarının hazırlanması:
 ```
@@ -98,7 +125,10 @@ php artisan make:controller YayineviController --resource
 
 ```
 
-Migration'ın herşeyi silip sıfırdan çalıştırılması: `php artisan migrate:fresh`
+- Migration'ın herşeyi silip sıfırdan çalıştırılması:
+- `php artisan migrate:fresh`
+- Factory'ler kullanılarak Tabloların doldurulması:
+- `php artisan db:seed`
 
 
 

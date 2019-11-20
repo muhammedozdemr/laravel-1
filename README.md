@@ -16,7 +16,8 @@
 - [Laravel 5 Cheat Sheet](https://learninglaravel.net/cheatsheet/)
 - [Geçici eMail Hesabı Hizmeti](https://temp-mail.org/)
 - [eMail Test Hizmeti](https://mailtrap.io/)
-
+- [Faker Class](https://github.com/fzaninotto/Faker)
+- [Faker Tutorial](https://kode-blog.io/laravel-5-faker-tutorial)
 
 # KURULUM
 
@@ -592,7 +593,7 @@ Veritabanına dummy kayıt ekleme işini yapar.
 - Her kullanıcı için 10 adet de POST oluşturmak için:
 - `$users->each(function ($user){ factory('App\Post', 10)->create([user_id]=>$user->id)};);`
 
-
+- Faker'in her zaman TÜRKÇE olarak çalışması için `config/app.app` içinde: `'faker_locale' => 'tr_TR', ` yapılması gerekir.
 - Yerelleştirilmiş veri üretme:
 ```PHP
 $faker = Faker\Factory::create('tr_TR'); // Üretilecekleri Türkçe üretsin...
